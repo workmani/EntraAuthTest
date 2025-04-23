@@ -1,0 +1,31 @@
+{
+  "name": "web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'Add Next.js dev command here'",
+    "build": "echo 'Add Next.js build command here'"
+  },
+  "dependencies": {
+    "@azure/msal-browser": "^4.11.0",
+    "@azure/msal-react": "^3.0.10",
+    "@repo/ui": "*",
+    "next": "^15.3.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*",
+    "@types/node": "^22.14.0",
+    "@types/react": "19.1.0",
+    "@types/react-dom": "19.1.1",
+    "eslint": "^9.25.0",
+    "typescript": "5.8.2"
+  },
+  "overrides": {
+    "@azure/msal-react": {
+      "react": "^19"
+    }
+  }
+}
