@@ -1,0 +1,158 @@
+# Entra ID Authentication Proof of Concept
+
+## Overview
+This proof of concept demonstrates a secure authentication implementation using Entra ID (formerly Azure AD) with Next.js and a C# API backend. It showcases best practices for authentication flows in modern applications using the Backend-for-Frontend (BFF) pattern, with proper test coverage through Test-Driven Development (TDD).
+
+## Core Features
+
+### 1. Next.js Frontend with Server Components
+- Implement a modern Next.js application using React Server Components
+- Create protected and public routes with proper authentication handling
+- Demonstrate efficient component architecture with auth-aware components
+- Provide clean separation between authenticated and unauthenticated states
+
+### 2. Auth.js Integration
+- Implement Auth.js v4 provider for Entra ID integration
+- Showcase session management and token handling
+- Implement proper security practices for token storage
+- Demonstrate migration path to Auth.js v5 with key differences highlighted
+
+### 3. Backend-for-Frontend (BFF) Pattern
+- Implement secure token forwarding from frontend to backend
+- Handle token lifecycle (acquisition, refresh, validation)
+- Prevent token exposure to client browser
+- Demonstrate proper CSRF protection
+
+### 4. C# API with JWT Validation
+- Create minimal API endpoints with authentication requirements
+- Implement proper JWT validation and claims extraction
+- Demonstrate role-based and claims-based authorization
+- Showcase proper error handling for authentication failures
+
+### 5. Test-Driven Development Approach
+- Comprehensive test suite for both frontend and backend components
+- Unit tests for auth-specific logic
+- Integration tests for auth flows
+- Mock strategies for testing auth-dependent components
+- CI pipeline configuration for automated testing
+
+## User Experience
+- **Developer Persona**: Application developers needing to implement secure Entra ID authentication
+- **Key Flows**: 
+  - Authentication process (login, session management, logout)
+  - Protected resource access
+  - API authorization
+- **UX Considerations**:
+  - Clear authentication state indicators
+  - Proper error handling for auth failures
+  - Smooth login/logout transitions
+
+## Technical Architecture
+
+### System Components
+- Next.js frontend application (TypeScript)
+- C# .NET API backend
+- Auth.js authentication provider
+- Entra ID tenant configuration
+
+### Data Models
+- User profile information
+- JWT token structure
+- Authentication session model
+
+### APIs and Integrations
+- Entra ID OAuth endpoints
+- Protected API endpoints
+- Auth.js provider integration
+
+### Infrastructure Requirements
+- Monorepo structure for frontend and backend
+- Shared type definitions between frontend and backend
+- Development environment with proper Entra ID configuration
+- Testing infrastructure with auth mocking capabilities
+
+## Development Roadmap
+
+### MVP Requirements
+1. **Project Setup & Configuration**
+   - Monorepo structure setup
+   - Next.js application scaffolding with TypeScript
+   - C# API project configuration
+   - Development environment configuration
+
+2. **Test Infrastructure**
+   - Frontend testing setup (Jest, React Testing Library)
+   - Backend testing setup (xUnit)
+   - Auth mocking utilities
+   - CI pipeline configuration
+
+3. **Auth.js v4 Implementation**
+   - Entra ID provider configuration
+   - Session handling implementation
+   - Protected route implementation
+
+4. **C# API with JWT Authentication**
+   - JWT validation middleware
+   - Protected API endpoints
+   - Claims extraction and usage
+
+5. **BFF Pattern Implementation**
+   - Secure token forwarding
+   - API request handling with auth
+   - CSRF protection
+
+6. **Integration & End-to-End Testing**
+   - Full authentication flow testing
+   - API access with authentication
+   - Error handling and edge cases
+
+### Future Enhancements
+1. **Auth.js v5 Migration**
+   - Update configuration for v5
+   - Leverage new v5 features
+   - Document migration process
+
+2. **Advanced Auth Scenarios**
+   - Role-based access control
+   - Conditional access policies
+   - Multi-tenant support
+
+3. **Enhanced Developer Experience**
+   - Detailed documentation
+   - Reusable components and hooks
+   - Performance optimizations
+
+## Logical Dependency Chain
+1. Project setup and testing infrastructure (foundation)
+2. Basic authentication with Auth.js v4 and Entra ID (core functionality)
+3. Protected API implementation with C# (backend security)
+4. BFF pattern implementation (secure communication)
+5. Integration testing of complete flows (verification)
+6. Auth.js v5 migration (enhancement)
+
+## Risks and Mitigations
+
+### Technical Challenges
+- **Risk**: Complexity of Entra ID configuration and OAuth flows
+  - **Mitigation**: Start with minimal configuration, expand gradually with tests
+
+- **Risk**: Secure implementation of BFF pattern
+  - **Mitigation**: Follow established patterns, implement comprehensive security tests
+
+- **Risk**: Auth.js version differences
+  - **Mitigation**: Clear separation between v4 and v5 implementations, with migration documentation
+
+### Development Challenges
+- **Risk**: Testing authentication flows can be complex
+  - **Mitigation**: Invest in proper mocking strategies and test utilities upfront
+
+- **Risk**: Coordination between frontend and backend components
+  - **Mitigation**: Define clear interfaces and shared types from the beginning
+
+## Appendix
+
+### Resources
+- Auth.js documentation
+- Microsoft Entra ID documentation
+- Best practices for JWT handling
+- BFF pattern references 

@@ -1,0 +1,91 @@
+{
+  "meta": {
+    "generatedAt": "2025-04-23T14:13:25.512Z",
+    "tasksAnalyzed": 10,
+    "thresholdScore": 5,
+    "projectName": "Your Project Name",
+    "usedResearch": false
+  },
+  "complexityAnalysis": [
+    {
+      "taskId": 1,
+      "taskTitle": "Setup Monorepo Structure",
+      "complexityScore": 7,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Break down the monorepo setup task into 5 sequential subtasks covering tool selection, project initialization, shared type configuration, build system setup, and code style configuration.",
+      "reasoning": "This task involves multiple technologies (Next.js, C#, TypeScript) and requires careful configuration of project structure, build systems, and code sharing. The complexity comes from ensuring proper integration between frontend and backend with shared types."
+    },
+    {
+      "taskId": 2,
+      "taskTitle": "Implement Test Infrastructure",
+      "complexityScore": 8,
+      "recommendedSubtasks": 6,
+      "expansionPrompt": "Break down the test infrastructure implementation into 6 subtasks covering frontend test setup, backend test setup, auth mocking utilities, CI pipeline configuration, code coverage setup, and test documentation.",
+      "reasoning": "Setting up comprehensive testing across both frontend and backend with auth mocking is complex. It requires expertise in multiple testing frameworks, understanding of authentication flows, and CI/CD integration."
+    },
+    {
+      "taskId": 3,
+      "taskTitle": "Configure Auth.js v4 with Entra ID Provider",
+      "complexityScore": 8,
+      "recommendedSubtasks": 6,
+      "expansionPrompt": "Break down the Auth.js v4 with Entra ID integration into 6 subtasks covering installation, environment configuration, provider setup, API route implementation, session management, and documentation.",
+      "reasoning": "Authentication implementation is inherently complex, especially with enterprise identity providers like Entra ID. This requires careful configuration, security considerations, and proper session management."
+    },
+    {
+      "taskId": 4,
+      "taskTitle": "Implement Protected and Public Routes",
+      "complexityScore": 6,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Break down the protected and public routes implementation into 5 subtasks covering route structure design, middleware implementation, redirect logic, auth-aware components, and user profile page creation.",
+      "reasoning": "This task requires understanding of Next.js App Router and authentication state management. The complexity is moderate as it builds on the authentication system but focuses on routing and UI components."
+    },
+    {
+      "taskId": 5,
+      "taskTitle": "Implement C# API with JWT Validation",
+      "complexityScore": 7,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Break down the C# API with JWT validation into 5 subtasks covering JWT configuration, middleware implementation, authorization policies, protected endpoint creation, and error handling.",
+      "reasoning": "Implementing secure JWT validation requires deep understanding of token-based authentication, claims validation, and proper error handling. The complexity comes from ensuring proper security while maintaining usability."
+    },
+    {
+      "taskId": 6,
+      "taskTitle": "Implement Backend-for-Frontend Pattern",
+      "complexityScore": 9,
+      "recommendedSubtasks": 7,
+      "expansionPrompt": "Break down the BFF pattern implementation into 7 subtasks covering proxy route creation, token forwarding mechanism, CSRF protection, token refresh handling, error handling, typed API client creation, and security review.",
+      "reasoning": "The BFF pattern with secure token handling is highly complex, involving security considerations, token lifecycle management, and proper error handling. This is one of the most complex tasks in the project."
+    },
+    {
+      "taskId": 7,
+      "taskTitle": "Implement User Experience Components",
+      "complexityScore": 5,
+      "recommendedSubtasks": 4,
+      "expansionPrompt": "Break down the user experience components implementation into 4 subtasks covering login/logout UI, authentication state indicators, error message components, and user profile display.",
+      "reasoning": "This task is primarily focused on UI components and user experience. While it requires integration with the authentication system, it's less complex than the core authentication implementation tasks."
+    },
+    {
+      "taskId": 8,
+      "taskTitle": "Implement Integration Tests for Complete Auth Flows",
+      "complexityScore": 8,
+      "recommendedSubtasks": 6,
+      "expansionPrompt": "Break down the integration testing task into 6 subtasks covering test scenario design, authentication flow testing, error scenario testing, BFF pattern testing, session persistence testing, and logout flow testing.",
+      "reasoning": "Integration testing of authentication flows is complex due to the need to simulate user authentication, handle tokens, and test various error scenarios. This requires deep understanding of both the authentication system and testing methodologies."
+    },
+    {
+      "taskId": 9,
+      "taskTitle": "Document Auth.js v5 Migration Path",
+      "complexityScore": 6,
+      "recommendedSubtasks": 4,
+      "expansionPrompt": "Break down the Auth.js v5 migration documentation task into 4 subtasks covering research of differences, implementation in a separate branch, migration guide creation, and performance/security improvement documentation.",
+      "reasoning": "This task requires research and implementation of a newer version of Auth.js, but is somewhat self-contained. The complexity comes from understanding the differences between versions and creating clear migration guidance."
+    },
+    {
+      "taskId": 10,
+      "taskTitle": "Create Comprehensive Documentation",
+      "complexityScore": 7,
+      "recommendedSubtasks": 5,
+      "expansionPrompt": "Break down the comprehensive documentation task into 5 subtasks covering setup instructions, authentication flow documentation, developer guides, security considerations, and troubleshooting guides.",
+      "reasoning": "Creating comprehensive documentation for a complex authentication system requires deep understanding of all components and the ability to explain them clearly. The complexity comes from the breadth of topics to cover and the need for accuracy."
+    }
+  ]
+}
