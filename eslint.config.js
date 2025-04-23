@@ -1,5 +1,5 @@
 import eslintConfig from '@repo/eslint-config';
-// import globals from 'globals'; // Keep globals for potential browser/node environment setting if needed later
+import globals from 'globals'; // Re-add globals import
 
 /** @type {import('eslint').Linter.FlatConfig[]} */
 export default [
@@ -24,14 +24,27 @@ export default [
       '.gitignore',
       'package-lock.json',
       'apps/web/', // Ignore the old web app dir
+      'scripts/task-complexity-report.json', // Ensure this is ignored if gitignored
     ],
   },
 
   // 2. Base config from shared package
-  // Spread the array exported from @repo/eslint-config
   ...eslintConfig,
 
-  // 3. (Optional) Add global languageOptions if needed (e.g., setting Node env)
+  // 3. Specific config for scripts directory to add Node.js globals
+  {
+    files: ['scripts/**/*.js'], // Target JS files in scripts dir
+    languageOptions: {
+      globals: {
+        ...globals.node, // Add Node.js built-in globals (like process, console)
+      },
+    },
+    rules: {
+      // Add any script-specific rule overrides if needed
+    },
+  },
+
+  // 4. (Optional) Add global languageOptions if needed
   // {
   //   languageOptions: {
   //     globals: {

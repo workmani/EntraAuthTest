@@ -67,3 +67,6 @@ tasks/
 
 # Visual Studio
 .vs/
+
+# Generated reports
+scripts/task-complexity-report.json
