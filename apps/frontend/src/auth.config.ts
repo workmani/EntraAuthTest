@@ -1,5 +1,3 @@
-// auth.config.ts for Auth.js v5
-import type { AuthConfig } from '@auth/core';
 import type { Account, Profile, Session } from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
 import MicrosoftEntraID from 'next-auth/providers/microsoft-entra-id';
