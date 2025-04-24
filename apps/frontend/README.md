@@ -1,5 +1,9 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Authentication
+
+This project uses Microsoft Entra ID (formerly Azure AD) for authentication. For a detailed explanation of the authentication flow from browser to API, see the [Authentication Flow Documentation](../../docs/auth-flow.md).
+
 ## Getting Started
 
 First, run the development server:

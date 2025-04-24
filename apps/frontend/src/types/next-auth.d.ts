@@ -5,7 +5,7 @@ declare module 'next-auth' {
    * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
    */
   interface Session {
-    accessToken?: string; // Add accessToken to the Session interface
+    accessToken?: string; // ADDING BACK: For server-side access via auth()
     idToken?: string; // Optionally add idToken if you need it
     error?: string; // To handle custom errors like RefreshAccessTokenError
     user?: {

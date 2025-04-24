@@ -4,6 +4,10 @@
 
 A task management system for AI-driven development with Claude, designed to work seamlessly with Cursor AI.
 
+## Project Documentation
+
+- [Authentication Flow](docs/auth-flow.md) - Detailed explanation of the Microsoft Entra ID authentication flow from browser to backend API
+
 ## Requirements
 
 - Node.js 14.0.0 or higher

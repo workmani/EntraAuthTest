@@ -1,0 +1,7 @@
+feat(ui): Improve responsive layout for mobile devices
+
+- Optimize container sizes for small screens
+- Add responsive text sizing with sm/md breakpoints
+- Improve button layout and spacing
+- Adjust padding and margins for better mobile experience
+- Make authentication display more compact on small devices 

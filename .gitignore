@@ -70,3 +70,6 @@ tasks/
 
 # Generated reports
 scripts/task-complexity-report.json
+
+# Local environment variables
+.env*.local
