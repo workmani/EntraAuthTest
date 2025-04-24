@@ -1,8 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { useState } from 'react';
+import Link from 'next/link';
+import { useState, useEffect } from 'react';
 
 // Define a type for the weather forecast data (adjust if needed)
 type WeatherForecast = {
@@ -14,36 +14,37 @@ type WeatherForecast = {
 
 export default function Home() {
   const { data: session, status } = useSession();
+  // Added state for weather data and errors
   const [weatherData, setWeatherData] = useState<WeatherForecast[] | null>(
     null
   );
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [showCookieDetails, setShowCookieDetails] = useState(false);
 
+  // Modified fetchWeather to call the Next.js API route
   const fetchWeather = async () => {
     setWeatherData(null); // Clear previous data
     setFetchError(null); // Clear previous error
 
-    if (!session || !session.accessToken) {
-      setFetchError('Not authenticated or access token missing.');
-      console.error('Session or Access Token missing:', session);
-      return;
-    }
-
-    console.log('Access Token:', session.accessToken);
-
     try {
-      // Replace with your actual backend API URL (e.g., from env var)
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5229';
-      const response = await fetch(`${apiUrl}/weatherforecast`, {
-        headers: {
-          Authorization: `Bearer ${session.accessToken}`,
-        },
-      });
+      // Call the Next.js API route
+      const response = await fetch('/api/weather');
 
       if (!response.ok) {
-        // Handle HTTP errors (e.g., 401 Unauthorized, 403 Forbidden)
+        // Handle HTTP errors proxied from the API route
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: `HTTP error! Status: ${response.status}` }));
+
+        // Handle auth errors specifically
+        if (response.status === 401 || response.status === 403) {
+          throw new Error(
+            'Not authorized to access weather data. Please sign in first.'
+          );
+        }
+
         throw new Error(
-          `HTTP error! status: ${response.status} ${response.statusText}`
+          errorData.message || `HTTP error! Status: ${response.status}`
         );
       }
 
@@ -60,150 +61,160 @@ export default function Home() {
   };
 
   return (
-    <div className="grid grid-rows-[auto_1fr_auto] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <div className="mb-4 flex flex-col items-center sm:items-start gap-2">
-          {status === 'loading' && <p>Loading...</p>}
-          {status === 'authenticated' && session?.user && (
-            <>
-              <p className="text-sm">
-                Welcome, {session.user.name || session.user.email || 'User'}!
+    <main className="flex min-h-screen flex-col items-center justify-between p-4 sm:p-6 md:p-24 grid-pattern">
+      <div className="z-10 w-full max-w-lg flex flex-col items-center justify-center">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-center mb-6 sm:mb-12 bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent py-2">
+          Entra ID Auth Test
+        </h1>
+
+        <div className="w-full mb-8 sm:mb-12">
+          {status === 'loading' ? (
+            <div className="w-full p-4 sm:p-6 bg-black/30 border border-gray-700 rounded-lg animate-pulse flex items-center justify-center">
+              <div className="h-6 w-24 bg-gray-700 rounded"></div>
+            </div>
+          ) : status === 'authenticated' && session ? (
+            <div className="w-full p-4 sm:p-6 bg-black/30 backdrop-blur-sm border border-gray-700 rounded-lg">
+              <p className="text-gray-300 mb-1 text-sm sm:text-base">
+                Signed in as:
               </p>
+              <p className="text-lg sm:text-xl font-medium text-white mb-2">
+                {session.user?.name}
+              </p>
+              <p className="text-gray-300 mb-1 text-sm sm:text-base">Email:</p>
+              <p className="text-base sm:text-lg text-white mb-4">
+                {session.user?.email}
+              </p>
+
+              {/* Session Cookie Display */}
+              <div className="mt-4 pt-4 border-t border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-gray-300 text-xs sm:text-sm">
+                    Authentication Status:
+                  </p>
+                  <button
+                    onClick={() => setShowCookieDetails(!showCookieDetails)}
+                    className="text-xs text-blue-400 hover:text-blue-300"
+                  >
+                    {showCookieDetails ? 'Hide Details' : 'Show Details'}
+                  </button>
+                </div>
+
+                <p className="text-green-400 text-sm mb-1">
+                  ✓ Authenticated (Session Active)
+                </p>
+                {showCookieDetails && (
+                  <div className="bg-black/50 p-2 sm:p-3 rounded border border-gray-800 mt-2">
+                    <p className="text-xs text-gray-400 mb-1">
+                      Session Information:
+                    </p>
+                    <ul className="list-disc list-inside text-xs text-gray-400 pl-2">
+                      <li>User ID: {session.user?.email}</li>
+                      <li>Auth Provider: Microsoft Entra ID</li>
+                      <li>Auth Type: JWT with HTTP-only Cookie</li>
+                      <li>Status: Active</li>
+                      <li>
+                        Note: Session cookies are HTTP-only and cannot be
+                        accessed by JavaScript for security
+                      </li>
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2 sm:gap-3 mt-6 sm:mt-8">
+                <button
+                  onClick={() => signOut()}
+                  className="flex-1 min-w-[120px] px-4 py-2 bg-transparent border border-red-500 text-red-500 rounded-md hover:bg-red-500/10 transition-colors text-sm sm:text-base"
+                >
+                  Sign Out
+                </button>
+                <button
+                  onClick={fetchWeather}
+                  className="flex-1 min-w-[120px] px-4 py-2 bg-transparent border border-blue-500 text-blue-500 rounded-md hover:bg-blue-500/10 transition-colors text-sm sm:text-base"
+                >
+                  Fetch Weather
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="w-full p-4 sm:p-6 bg-black/30 backdrop-blur-sm border border-gray-700 rounded-lg">
+              <p className="text-lg sm:text-xl text-white mb-4">
+                Not signed in
+              </p>
+
+              {/* Session Cookie Display for logged out state */}
+              <div className="mt-4 mb-4 sm:mb-6 pt-4 border-t border-gray-700">
+                <p className="text-gray-300 text-xs sm:text-sm mb-2">
+                  Authentication Status:
+                </p>
+                <p className="text-gray-400 text-xs sm:text-sm">
+                  ✗ Not authenticated (No active session)
+                </p>
+                <p className="text-gray-500 text-xs mt-2">
+                  HTTP-only session cookies will be created after signing in
+                </p>
+              </div>
+
               <button
-                onClick={() => signOut()}
-                className="px-4 py-2 font-semibold text-sm bg-red-500 text-white rounded-md shadow-sm hover:bg-red-600"
+                onClick={() => signIn('microsoft-entra-id')}
+                className="w-full sm:w-auto px-4 py-2 bg-white text-black font-medium rounded-md hover:bg-gray-200 transition-colors text-sm sm:text-base"
               >
-                Sign Out
+                Sign In with Microsoft
               </button>
-              <button
-                onClick={fetchWeather}
-                className="mt-2 px-4 py-2 font-semibold text-sm bg-green-500 text-white rounded-md shadow-sm hover:bg-green-600"
-              >
-                Fetch Weather (Protected)
-              </button>
-            </>
-          )}
-          {status === 'unauthenticated' && (
-            <button
-              onClick={() => signIn('azure-ad')}
-              className="px-4 py-2 font-semibold text-sm bg-blue-500 text-white rounded-md shadow-sm hover:bg-blue-600"
-            >
-              Sign In with Azure AD
-            </button>
+
+              <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-700">
+                <p className="text-gray-400 mb-3 text-xs sm:text-sm">
+                  API Testing
+                </p>
+                <div className="flex flex-wrap gap-2 sm:gap-3">
+                  <button
+                    onClick={fetchWeather}
+                    className="w-full sm:w-auto px-4 py-2 bg-transparent border border-blue-500 text-blue-500 rounded-md hover:bg-blue-500/10 transition-colors text-sm sm:text-base"
+                  >
+                    Test Fetch Weather
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
+
         {fetchError && (
-          <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-            <p>Error fetching weather: {fetchError}</p>
+          <div className="w-full p-4 sm:p-6 mb-6 sm:mb-8 bg-black/30 backdrop-blur-sm border border-red-900 rounded-lg">
+            <p className="text-red-400 font-medium mb-2 text-sm sm:text-base">
+              Error fetching weather:
+            </p>
+            <p className="text-red-300 text-sm">{fetchError}</p>
           </div>
         )}
+
         {weatherData && (
-          <div className="mt-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
-            <h2 className="font-semibold mb-2">Weather Forecast:</h2>
-            <ul>
+          <div className="w-full p-4 sm:p-6 bg-black/30 backdrop-blur-sm border border-green-900 rounded-lg">
+            <h2 className="text-green-400 font-medium text-base sm:text-lg mb-4">
+              Weather Forecast:
+            </h2>
+            <ul className="space-y-2 sm:space-y-3">
               {weatherData.map((item) => (
-                <li key={item.date}>
-                  {item.date}: {item.temperatureC}°C / {item.temperatureF}°F -{' '}
-                  {item.summary}
+                <li
+                  key={item.date}
+                  className="text-green-300 pb-2 border-b border-green-900/60 text-sm sm:text-base"
+                >
+                  <span className="font-medium">{item.date}</span>:{' '}
+                  {item.temperatureC}°C / {item.temperatureF}°F - {item.summary}
                 </li>
               ))}
             </ul>
           </div>
         )}
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{' '}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+      </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      <div className="flex items-center justify-center mt-8 sm:mt-12 mb-4 text-center">
+        <p className="text-gray-500 text-xs sm:text-sm">
+          Powered by <span className="text-white font-semibold">Next.js</span>{' '}
+          and{' '}
+          <span className="text-white font-semibold">Microsoft Entra ID</span>
+        </p>
+      </div>
+    </main>
   );
 }
