@@ -4,7 +4,9 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
+    "lint": "eslint --config ./eslint.config.js .",
+    "lint:fix": "eslint --config ./eslint.config.js --fix .",
+    "lint:strict": "eslint --config ./eslint.config.js --max-warnings=0 .",
     "format": "prettier --write \"**/*.{ts,tsx,js,mjs,cjs,json,md}\" --ignore-path .gitignore",
     "check-types": "turbo run check-types",
     "list": "node scripts/dev.js list",

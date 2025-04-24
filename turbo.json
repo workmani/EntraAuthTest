@@ -7,6 +7,12 @@
       "outputs": ["dist/**", ".next/**"]
     },
     "lint": {
+      "inputs": [
+        "**/*.{ts,tsx,js,mjs,cjs}",
+        ".eslintrc.js",
+        "eslint.config.js",
+        "package.json"
+      ],
       "outputs": []
     },
     "dev": {
