@@ -51,6 +51,14 @@
   "overrides": {
     "@azure/msal-react": {
       "react": "$react"
+    },
+    "lightningcss": {
+      "@napi-rs/napi-rs": "2.3.0"
+    },
+    "@tailwindcss/postcss": {
+      "lightningcss": {
+        "@napi-rs/napi-rs": "2.3.0"
+      }
     }
   }
 }
