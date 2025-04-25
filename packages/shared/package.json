@@ -10,7 +10,8 @@
     "build": "echo 'Add build command here'",
     "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
     "lint": "eslint src/ --fix",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "check-types": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
