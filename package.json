@@ -12,7 +12,8 @@
     "list": "node scripts/dev.js list",
     "generate": "node scripts/dev.js generate",
     "parse-prd": "node scripts/dev.js parse-prd",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "postinstall": "node -e \"try { process.platform === 'linux' && require('child_process').execSync('npm rebuild lightningcss --platform=linux --arch=x64', {stdio: 'inherit'}) } catch (e) {}\""
   },
   "devDependencies": {
     "@eslint/js": "^9.25.1",
