@@ -1,72 +1,94 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
+/**
+ * Server-side API Route (Route Handler) to proxy requests to the backend API.
+ * This demonstrates the Backend-for-Frontend (BFF) pattern.
+ * The Next.js frontend calls this route, which then securely calls the actual backend API.
+ *
+ * Why use a proxy?
+ * 1. Security: The frontend browser never directly handles the backend `accessToken`.
+ * 2. Abstraction: Hides backend details from the frontend.
+ * 3. Simplification: Can consolidate multiple backend calls or transform data.
+ */
 export async function GET(req: NextRequest) {
-  // Use getToken to get the raw JWT payload directly from the request/cookie
+  // --- Authentication & Token Retrieval ---
+  // Use `getToken` from 'next-auth/jwt' to directly access the decrypted JWT payload
+  // stored in the session cookie. This is necessary because the standard `auth()` helper
+  // returns the *session* object (from the `session` callback in auth.config.ts),
+  // which deliberately omits the sensitive `accessToken`.
+  // We need the raw `accessToken` here to authenticate with the backend API.
   const token = await getToken({ req, secret: process.env.AUTH_SECRET });
-  console.log('API Route token from getToken:', JSON.stringify(token, null, 2)); // Log the raw token
 
-  // Access accessToken directly from the token payload (as defined in JWT interface)
-  const accessToken = token?.accessToken as string | undefined; // Access token from JWT
-  console.log(
-    'API Route extracted accessToken (from getToken):',
-    accessToken ? accessToken.substring(0, 10) + '...' : 'null/undefined'
-  ); // Log extracted token
+  // Extract the accessToken from the JWT payload (defined in the JWT interface and populated
+  // in the `jwt` callback in auth.config.ts).
+  const accessToken = token?.accessToken as string | undefined;
 
-  // Check if the token exists and contains the accessToken
+  // --- Authorization Check ---
+  // Ensure the user is authenticated and the necessary token is present.
   if (!token || !accessToken) {
     return NextResponse.json(
       {
-        message: 'Not authenticated or token/accessToken missing via getToken',
+        message:
+          'Unauthorized: Missing authentication token or backend access token.',
       },
       { status: 401 }
     );
   }
 
-  const backendApiUrl = process.env.API_BASE_URL; // Your C# backend URL from .env
+  // --- Backend API Call Configuration ---
+  const backendApiUrl = process.env.API_BASE_URL; // Get the backend URL from environment variables
   if (!backendApiUrl) {
-    console.error('API_BASE_URL environment variable is not set.');
+    console.error('API_BASE_URL environment variable is not set.'); // Keep critical config errors
     return NextResponse.json(
       { message: 'API endpoint configuration error' },
       { status: 500 }
     );
   }
 
+  // --- Proxying the Request to the Backend ---
   try {
-    console.log(
-      `Proxying GET /weatherforecast to ${backendApiUrl} with token.`
-    );
+    // Use the extracted `accessToken` to make an authenticated call to the backend API.
     const response = await fetch(`${backendApiUrl}/weatherforecast`, {
       headers: {
+        // Pass the access token in the standard 'Authorization: Bearer <token>' header.
+        // The backend API should be configured to validate this token.
         Authorization: `Bearer ${accessToken}`,
-        // Add other necessary headers if required by your backend
+        // Add other headers if your backend requires them (e.g., Content-Type for POST/PUT).
       },
-      cache: 'no-store', // Ensure fresh data is fetched
+      // Disable caching for this proxy request to ensure fresh data from the backend.
+      // Adjust caching strategy based on your application's needs.
+      cache: 'no-store',
     });
 
+    // --- Handling Backend Response ---
     if (!response.ok) {
-      // Forward the status code and potentially the error message from the backend
-      const errorBody = await response.text(); // Read error body as text first
+      // If the backend returned an error, forward the status code and message.
+      const errorBody = await response.text(); // Get potential error details
       console.error(
+        // Log backend errors server-side for debugging
         `Backend API error: ${response.status} ${response.statusText}`,
         errorBody
       );
       return NextResponse.json(
         {
-          message: `Error from backend: ${response.statusText}`,
-          details: errorBody,
+          message: `Error from backend API: ${response.statusText}`,
+          details: errorBody, // Optionally include backend error details
         },
-        { status: response.status }
+        { status: response.status } // Forward the backend status code
       );
     }
 
-    // If response is OK, parse and return the JSON data
+    // If the backend response is successful, parse the JSON data.
     const data = await response.json();
+
+    // Return the successful backend data to the frontend client.
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error fetching data in API proxy route:', error);
+    // --- General Error Handling ---
+    console.error('Error in API proxy route:', error); // Log unexpected errors
     return NextResponse.json(
-      { message: 'Internal Server Error in proxy route' },
+      { message: 'Internal Server Error while contacting backend API' },
       { status: 500 }
     );
   }

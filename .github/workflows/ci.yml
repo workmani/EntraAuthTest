@@ -50,11 +50,13 @@ jobs:
           # Debug: List installed lightningcss files - using || true to prevent non-zero exit
           find node_modules/lightningcss -type f | grep -i linux || true
 
-      - name: Rebuild lightningcss for Linux
+      - name: Rebuild Tailwind/LightningCSS for Linux
         run: |
-          npm rebuild lightningcss --platform=linux --arch=x64
+          npm rebuild @tailwindcss/postcss lightningcss --platform=linux --arch=x64
           # Verify the rebuild created the right binaries - using || true to prevent non-zero exit
-          find node_modules/lightningcss -type f | grep -i linux || true
+          echo "--- Checking for lightningcss Linux binary ---"
+          find node_modules/lightningcss -name '*.linux-x64-gnu.node' -print -quit || echo "Linux binary not found in node_modules/lightningcss"
+          echo "--- Checking finished ---"
 
       - name: Build
         run: npm run build 

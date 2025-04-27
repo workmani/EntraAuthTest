@@ -4,68 +4,94 @@ import MicrosoftEntraID from 'next-auth/providers/microsoft-entra-id';
 
 // Types are extended in apps/ui/types/next-auth.d.ts
 
-// --- Environment Variable Check for debugging ---
-console.log('--- Environment Variable Check (auth.config.ts) ---');
-console.log(
-  'AUTH_MICROSOFT_ENTRA_ID_ID:',
-  process.env.AUTH_MICROSOFT_ENTRA_ID_ID
-);
-console.log(
-  'AUTH_MICROSOFT_ENTRA_ID_SECRET:',
-  process.env.AUTH_MICROSOFT_ENTRA_ID_SECRET ? '[Exists]' : '[Missing]'
-);
-console.log(
-  'AUTH_MICROSOFT_ENTRA_ID_TENANT_ID:',
-  process.env.AUTH_MICROSOFT_ENTRA_ID_TENANT_ID
-);
-console.log(
-  'AUTH_MICROSOFT_ENTRA_ID_BACKEND_CLIENT_ID:',
-  process.env.AUTH_MICROSOFT_ENTRA_ID_BACKEND_CLIENT_ID
-);
-console.log('AUTH_SECRET:', process.env.AUTH_SECRET ? '[Exists]' : '[Missing]');
-console.log('API_BASE_URL:', process.env.API_BASE_URL);
-console.log('--- End Environment Variable Check ---');
-
+// --- Environment Variable Retrieval ---
+// Retrieve necessary credentials and configuration from environment variables.
+// Ensure these are set in your .env file for local development and in your deployment environment.
+const entraClientId = process.env.AUTH_MICROSOFT_ENTRA_ID_ID;
+const entraClientSecret = process.env.AUTH_MICROSOFT_ENTRA_ID_SECRET;
+const entraTenantId = process.env.AUTH_MICROSOFT_ENTRA_ID_TENANT_ID;
 const backendClientId = process.env.AUTH_MICROSOFT_ENTRA_ID_BACKEND_CLIENT_ID;
-if (!backendClientId) {
-  console.error(
-    'AUTH_MICROSOFT_ENTRA_ID_BACKEND_CLIENT_ID is not set. Cannot construct correct API scope.'
-  );
-}
-// Construct the scope using the BACKEND Client ID
-const backendApiScope = `api://${backendClientId}/API.Read`; // Or adjust scope name as needed
+const authSecret = process.env.AUTH_SECRET;
+const nextAuthUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'; // Default for local dev
 
+// --- Environment Variable Validation (Optional but Recommended) ---
+// Basic checks to ensure critical variables are present during startup.
+if (!entraClientId) console.error('Missing AUTH_MICROSOFT_ENTRA_ID_ID');
+if (!entraClientSecret) console.error('Missing AUTH_MICROSOFT_ENTRA_ID_SECRET');
+if (!entraTenantId) console.error('Missing AUTH_MICROSOFT_ENTRA_ID_TENANT_ID');
+if (!backendClientId)
+  console.error('Missing AUTH_MICROSOFT_ENTRA_ID_BACKEND_CLIENT_ID');
+if (!authSecret) console.error('Missing AUTH_SECRET');
+
+// --- Scope Configuration ---
+// Define the OAuth scopes required for authentication and API access.
+// 'openid', 'profile', 'email' are standard OIDC scopes.
+// The 'api://...' scope requests an access token for your custom backend API,
+// registered in Microsoft Entra ID. The Client ID of the *backend* application
+// registration is used here.
+const backendApiScope = `api://${backendClientId}/API.Read`; // Adjust '/API.Read' if your scope has a different name
+
+// --- NextAuth Configuration (authConfig) ---
 const authConfig = {
   providers: [
     MicrosoftEntraID({
-      clientId: process.env.AUTH_MICROSOFT_ENTRA_ID_ID!,
-      clientSecret: process.env.AUTH_MICROSOFT_ENTRA_ID_SECRET!,
-      issuer: `https://login.microsoftonline.com/${process.env.AUTH_MICROSOFT_ENTRA_ID_TENANT_ID}/v2.0`,
+      // Frontend application's Client ID from Entra ID app registration
+      clientId: entraClientId!,
+      // Frontend application's Client Secret
+      clientSecret: entraClientSecret!,
+      // The specific Entra ID tenant and version endpoint
+      issuer: `https://login.microsoftonline.com/${entraTenantId}/v2.0`,
+      // Configure authorization parameters
       authorization: {
         params: {
+          // Request the necessary scopes
           scope: `openid profile email ${backendApiScope}`,
-          tenant: process.env.AUTH_MICROSOFT_ENTRA_ID_TENANT_ID!,
+          // Specify the tenant ID again for clarity/correctness
+          tenant: entraTenantId!,
         },
       },
     }),
+    // Add other providers here if needed (e.g., Google, GitHub)
   ],
-  // Fix the URL/port issue - specify the correct URL for authentication
+  // --- URL Configuration ---
+  // Ensure NextAuth uses the correct base URL, especially important behind proxies or in containers.
+  // Uses NEXTAUTH_URL environment variable or defaults to localhost:3000.
   urls: {
-    baseUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000',
+    baseUrl: nextAuthUrl,
   },
-  secret: process.env.AUTH_SECRET,
+  // --- Session Secret ---
+  // A secret used to encrypt the session JWT. MUST be set in the environment.
+  secret: authSecret,
+  // --- Session Strategy ---
   session: {
-    // Use JWT strategy for sessions, required for BFF pattern where the Next.js
-    // backend manages the session token containing backend API access details.
+    // Use JSON Web Tokens (JWT) for session management.
+    // This is crucial for the Backend-for-Frontend (BFF) pattern, where the Next.js
+    // server acts as a secure intermediary between the client and backend APIs.
+    // The JWT stored in the session cookie contains the necessary tokens (like the backend access token)
+    // that the Next.js server can use, without exposing them directly to the browser.
     strategy: 'jwt',
   },
+  // --- Callbacks ---
+  // Callbacks allow customizing the authentication flow and session data.
   callbacks: {
     /**
-     * Called whenever a JWT is created (initial sign-in) or updated (session accessed).
-     * The returned object is encrypted and stored in the session cookie.
-     * We use this to persist the `accessToken` received from Entra ID
-     * so our server-side API proxy can use it to call the backend.
-     * We also persist roles for authorization checks.
+     * jwt Callback: Executed when a JWT is created or updated.
+     *
+     * Purpose: To embed necessary information into the JWT *before* it's encrypted
+     *          and stored in the session cookie. This is the *only* place the
+     *          Next.js server-side has access to the raw tokens from the provider
+     *          during the session lifecycle (after initial sign-in).
+     *
+     * Use Case (BFF): Persist the `accessToken` obtained from Entra ID (which is scoped
+     *                 for your backend API) into the JWT. This allows server-side
+     *                 components or API routes within Next.js to extract this token
+     *                 later and securely call the backend API on behalf of the user.
+     *                 Also persist user roles or other critical server-side info.
+     *
+     * @param token The JWT object being built.
+     * @param account Contains provider details like access_token, expires_at upon initial sign-in.
+     * @param profile Contains user profile information from the provider upon initial sign-in.
+     * @returns The modified token object to be encrypted and stored.
      */
     async jwt({
       token,
@@ -76,51 +102,65 @@ const authConfig = {
       account: Account | null;
       profile?: Profile | null;
     }) {
-      console.log('--- JWT Callback Start ---');
-
-      // On initial sign-in, account and profile are available.
+      // Check if this is the initial sign-in flow by seeing if `account` exists.
       if (account && profile) {
-        console.log('JWT: Processing initial sign-in');
-        // Persist the access token, expiry, and refresh token (if available) in the JWT
+        // Persist the backend API access token in the JWT.
         token.accessToken = account.access_token;
-        token.expiresAt = account.expires_at; // Unix timestamp (seconds)
+        // Persist the token's expiry time (UTC seconds). Useful for refresh logic.
+        token.expiresAt = account.expires_at;
+        // Persist the refresh token if available and needed for session extension.
         token.refreshToken = account.refresh_token;
+        // Persist user roles obtained from the Entra ID token claims (if configured).
+        token.roles = profile.roles || []; // Ensure roles are always an array. Adjust 'profile.roles' based on your token claims.
 
-        // Persist roles from the profile into the JWT
-        token.roles = profile.roles || [];
-
-        // TODO: Consider adding logic here to handle access token expiry/refresh using the refreshToken
+        // Note: Implement token refresh logic here if needed.
+        // Check if `token.accessToken` is expired using `token.expiresAt` and
+        // use `token.refreshToken` to get a new `accessToken` from Entra ID.
+        // Update token.accessToken and token.expiresAt accordingly.
+        // If refresh fails, set an error flag: `token.error = "RefreshAccessTokenError"`
       }
 
-      console.log('--- JWT Callback End ---');
-      // Log the final token object being returned/saved
-      console.log('JWT Callback: Final token state being returned:', token);
-      return token; // This object is encrypted in the session cookie
+      // Return the potentially modified token.
+      // This object is encrypted and stored in the session cookie, accessible *only* server-side.
+      return token;
     },
 
     /**
-     * Called whenever the session is accessed (e.g., `useSession`, `auth()` client-side).
-     * The `token` parameter is the decrypted JWT from the `jwt` callback.
-     * We use this to expose ONLY CLIENT-SAFE data to the frontend.
-     * IMPORTANT: Do NOT expose sensitive tokens like `accessToken` here.
+     * session Callback: Executed when a session is accessed client-side (e.g., `useSession`, `auth()`).
+     *
+     * Purpose: To control what data is exposed from the server-side JWT (managed by the `jwt` callback)
+     *          to the client-side session object. This acts as a security boundary.
+     *
+     * Use Case (BFF): Expose only *client-safe* data. User details like name, email, and roles are
+     *                 typically safe. **Crucially, DO NOT expose sensitive tokens like `accessToken`
+     *                 or `refreshToken` here.** These should remain server-side only.
+     *
+     * @param session The client-side session object being built.
+     * @param token The decrypted JWT payload from the `jwt` callback.
+     * @returns The modified session object available to the client.
      */
     async session({ session, token }: { session: Session; token: JWT }) {
-      console.log('--- Session Callback Start ---');
-
-      // Pass necessary user details (like roles) to the client-side session object
+      // Transfer necessary user details from the JWT (token) to the client session.
       if (session.user) {
-        session.user.roles = token.roles || []; // Get roles from the JWT
+        // Make roles available to the client for UI adjustments or basic checks.
+        session.user.roles = token.roles || [];
+        // Add other safe user properties if needed.
+        // session.user.id = token.sub; // Example: Exposing user ID (subject)
       }
 
-      // Do NOT expose the backend access token to the client-side session
-      // session.accessToken = token.accessToken;
-      session.error = token.error; // Pass potential errors (e.g., from refresh)
+      // Pass potential errors (e.g., from token refresh failure) to the client.
+      session.error = token.error;
 
-      console.log('--- Session Callback End ---');
-      return session; // This object is returned to the client
+      // Explicitly AVOID exposing the backend access token to the client.
+      // session.accessToken = token.accessToken; // <= DON'T DO THIS
+
+      // Return the sanitized session object for client-side use.
+      return session;
     },
   },
-  // Enable debug logs in development for easier troubleshooting
+  // --- Debugging ---
+  // Enable detailed NextAuth logs during development for easier troubleshooting.
+  // Automatically disabled in production builds.
   debug: process.env.NODE_ENV === 'development',
 };
 
